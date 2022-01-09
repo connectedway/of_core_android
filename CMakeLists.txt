@@ -22,9 +22,7 @@ set(SRCS
         src/waitset_android.c
         )
 
-add_library(of_core_android STATIC ${SRCS})
-target_link_libraries(of_core_android PUBLIC of_core_static)
+add_library(of_core_android OBJECT {SRCS})
+set_property(TARGET of_core_android PROPERTY POSITION_INDEPENDENT_CODE ON)
 
-set_target_properties(of_core_android PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(of_core_android PROPERTIES SOVERSION 1)
 
