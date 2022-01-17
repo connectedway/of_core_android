@@ -179,7 +179,7 @@ OFC_PROCESS_ID ofc_process_get_id_impl (OFC_HANDLE hProcess)
 {
   pid_t pid ;
 
-  pid = (pid_t) ofc_handle_lock (hProcess) ;
+  pid = (pid_t) (OFC_DWORD_PTR) ofc_handle_lock (hProcess) ;
 
   if (pid != (pid_t) 0)
     ofc_handle_unlock (hProcess) ;
@@ -191,7 +191,7 @@ OFC_VOID ofc_process_term_impl(OFC_HANDLE hProcess)
 {
   pid_t pid ;
 
-  pid = (pid_t) ofc_handle_lock(hProcess) ;
+  pid = (pid_t) (OFC_DWORD_PTR) ofc_handle_lock(hProcess) ;
 
   kill (pid, SIGTERM) ;
 
