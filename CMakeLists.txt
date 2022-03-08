@@ -22,7 +22,7 @@ set(SRCS
         src/waitset_android.c
         )
 
-add_library(of_core_android OBJECT {SRCS})
+add_library(of_core_android OBJECT ${SRCS})
 set_property(TARGET of_core_android PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 
