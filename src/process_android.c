@@ -3,6 +3,8 @@
  * Attribution-NoDerivatives 4.0 International license that can be
  * found in the LICENSE file.
  */
+#define _GNU_SOURCE
+#include <link.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/types.h>
@@ -11,6 +13,7 @@
 #include <pthread.h>
 #include <sys/wait.h>
 #include <stdlib.h>
+#include <elf.h>
 
 #include "ofc/types.h"
 #include "ofc/handle.h"
@@ -208,3 +211,129 @@ ofc_process_crash_impl(OFC_CCHAR *obuf) {
   ofc_write_console_impl(obuf) ;
   _Exit(EXIT_SUCCESS);
 }  
+
+#define OBUF_SIZE 200
+#if 0
+static uint64_t process_dump_lib(OFC_CCHAR *name, struct dl_phdr_info *info)
+{
+  OFC_BOOL found;
+  OFC_CHAR obuf[OBUF_SIZE];
+  const ElfW(Phdr) *phdr;
+  ElfW(Half) phnum;
+  ElfW(Addr) load_addr;
+    
+  phdr = info->dlpi_phdr;
+  phnum = info->dlpi_phnum;
+  load_addr = 0;
+
+  found = OFC_FALSE;
+  for (OFC_INT i = 0; i < phnum && !found; i++)
+    {
+      if ((phdr[i].p_type == PT_LOAD) && ((phdr[i].p_flags & PF_X) != 0))
+	{
+	  found = OFC_TRUE;
+	  load_addr = phdr[i].p_vaddr + info->dlpi_addr;
+	}
+    }
+
+  ofc_snprintf(obuf, OBUF_SIZE,
+	       "Library Load: %s: 0x%016x\n", name,
+	       (uint64_t) load_addr);
+  ofc_write_console_impl(obuf);
+
+  ofc_snprintf(obuf, OBUF_SIZE,
+	       "ofc_process_crash_impl 0x%0-16p\n",
+	       (OFC_VOID *) ofc_process_crash_impl);
+  ofc_write_console_impl(obuf);
+
+  return (load_addr);
+}
+#endif
+
+static uint64_t core_load_addr = 0;
+static uint64_t smb_load_addr = 0;
+
+static int process_dump_libs_callback(struct dl_phdr_info *info,
+				      size_t size,
+				      void *data)
+{
+  ElfW(Addr) addr;
+  const char *name;
+  OFC_SIZET len;
+  name = info->dlpi_name;
+  OFC_CHAR obuf[OBUF_SIZE];
+  
+  if (ofc_substr("libof_core_jni", name) >= 0)
+    {
+      core_load_addr = info->dlpi_addr;
+      ofc_snprintf(obuf, OBUF_SIZE,
+		   "Library Load: %s: 0x%016x\n", "libof_core_jni",
+		   (uint64_t) core_load_addr);
+      ofc_write_console_impl(obuf);
+    }
+  else if (ofc_substr("libof_smb_jni", name) >= 0)
+    {
+      smb_load_addr = info->dlpi_addr;
+      ofc_snprintf(obuf, OBUF_SIZE,
+		   "Library Load: %s: 0x%016x\n", "libof_smb_jni",
+		   (uint64_t) smb_load_addr);
+      ofc_write_console_impl(obuf);
+    }
+
+  return (0);
+}
+
+OFC_VOID
+ofc_process_dump_libs_impl(OFC_VOID)
+{
+  OFC_CHAR obuf[OBUF_SIZE];
+
+  dl_iterate_phdr(process_dump_libs_callback, OFC_NULL);
+}
+
+OFC_VOID *ofc_process_relative_addr_impl(OFC_VOID *addr)
+{
+  OFC_VOID *rel;
+  OFC_ULONG_PTR ptr;
+
+  ptr = (OFC_ULONG_PTR) addr;
+  if (core_load_addr == 0 || smb_load_addr == 0)
+    ptr = 0;
+  else if (core_load_addr > smb_load_addr)
+    {
+      if (ptr > core_load_addr)
+	{
+	  ptr -= core_load_addr;
+	}
+      else if (ptr > smb_load_addr)
+	{
+	  ptr -= smb_load_addr;
+	  /*
+	   * set the top bit so we know it's in smb lib
+	   */
+	  ptr |= 0x8000000000000000LL;
+	}
+      else
+	ptr = 0;
+    }
+  else if (smb_load_addr > core_load_addr)
+    {
+      if (ptr > smb_load_addr)
+	{
+	  ptr -= smb_load_addr;
+	  /*
+	   * set the top bit so we know it's in smb lib
+	   */
+	  ptr |= 0x8000000000000000LL;
+	}
+      else if (ptr > core_load_addr)
+	{
+	  ptr -= core_load_addr;
+	}
+      else
+	ptr = 0;
+    }
+  else
+    ptr = 0;
+  return ((OFC_VOID *) ptr);
+}

@@ -17,6 +17,8 @@
 #include "ofc/libc.h"
 #include "ofc/heap.h"
 #include "ofc/framework.h"
+#include "ofc/version.h"
+#include "ofc/process.h"
 
 #include <android/log.h>
 
@@ -32,10 +34,12 @@
 OFC_INT g_fd = STDOUT_FILENO ;
 OFC_INT ix = 0 ;
 
+#define OBUF_SIZE 200
 static OFC_VOID open_log(OFC_VOID) {
 #if defined(LOG_TO_FILE)
   char szPath[128] ;
   OFC_TCHAR config_dir[128];
+  OFC_CHAR obuf[OBUF_SIZE];
 
   if (ofc_get_config_dir(config_dir, 128) == OFC_TRUE)
     {
@@ -49,6 +53,14 @@ static OFC_VOID open_log(OFC_VOID) {
 
       if (g_fd < 0)
 	g_fd = STDOUT_FILENO ;
+
+      ofc_snprintf(obuf, OBUF_SIZE,
+		   "OpenFiles (%s) %d.%d %s\n",
+		   OFC_SHARE_VARIANT,
+		   OFC_SHARE_MAJOR, OFC_SHARE_MINOR,
+		   OFC_SHARE_TAG);
+      ofc_write_console(obuf);
+      ofc_process_dump_libs();
     }
 #endif  
 }

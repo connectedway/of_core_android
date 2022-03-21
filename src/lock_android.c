@@ -9,10 +9,11 @@
 #include "ofc/types.h"
 #include "ofc/lock.h"
 #include "ofc/heap.h"
+#include "ofc/process.h"
 
 typedef struct
 {
-  OFC_DWORD_PTR caller ;
+  OFC_VOID *caller ;
   OFC_UINT32 thread ;
   pthread_mutexattr_t mutex_attr ;
   pthread_mutex_t mutex_lock ;
@@ -32,6 +33,7 @@ OFC_VOID *ofc_lock_init_impl(OFC_VOID)
     lock = ofc_malloc(sizeof(OFC_LOCK_IMPL));
     pthread_mutexattr_init(&lock->mutex_attr);
     pthread_mutex_init (&lock->mutex_lock, &lock->mutex_attr) ;
+    lock->caller = OFC_NULL;
     return (lock);
 }
 
@@ -41,7 +43,10 @@ OFC_BOOL ofc_lock_try_impl(OFC_LOCK_IMPL *lock)
 
   ret = OFC_FALSE ;
   if (pthread_mutex_trylock (&lock->mutex_lock) == 0)
-    ret = OFC_TRUE ;
+    {
+      lock->caller = ofc_process_relative_addr(__builtin_return_address(1));
+      ret = OFC_TRUE ;
+    }
 
   return (ret) ;
 }
@@ -49,10 +54,12 @@ OFC_BOOL ofc_lock_try_impl(OFC_LOCK_IMPL *lock)
 OFC_VOID ofc_lock_impl(OFC_LOCK_IMPL *lock)
 {
     pthread_mutex_lock(&lock->mutex_lock);
+    lock->caller = ofc_process_relative_addr(__builtin_return_address(1));
 }
 
 OFC_VOID ofc_unlock_impl(OFC_LOCK_IMPL *lock)
 {
+    lock->caller = ofc_process_relative_addr(__builtin_return_address(1));
     pthread_mutex_unlock(&lock->mutex_lock);
 }
 
