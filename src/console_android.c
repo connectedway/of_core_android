@@ -59,7 +59,7 @@ static OFC_VOID open_log(OFC_VOID) {
 		   OFC_SHARE_VARIANT,
 		   OFC_SHARE_MAJOR, OFC_SHARE_MINOR,
 		   OFC_SHARE_TAG);
-      ofc_write_console(obuf);
+      ofc_write_console_impl(obuf);
       ofc_process_dump_libs();
     }
 #endif  
