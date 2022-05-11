@@ -174,6 +174,7 @@ OFC_HANDLE ofc_thread_create_impl(OFC_DWORD(scheduler)(OFC_HANDLE hThread,
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED) ;
       else if (androidThread->detachstate == OFC_THREAD_JOIN)
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE) ;
+      pthread_attr_setstacksize(&attr, 8 * 1024 * 1024);
 
       if (pthread_create (&androidThread->thread, &attr,
 			  ofc_thread_launch, androidThread) != 0)
