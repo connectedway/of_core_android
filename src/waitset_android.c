@@ -26,6 +26,9 @@
 #include "ofc/file.h"
 
 #include "ofc_android/fs_android.h"
+#if defined(OF_RESOLVER_FS)
+#include "of_resolver_fs/fs_resolver.h"
+#endif
 
 /**
  * \defgroup waitset_android Android Dependent Scheduler Handling
@@ -274,6 +277,23 @@ OFC_HANDLE ofc_waitset_wait_impl(OFC_HANDLE handle)
 	      wait_count++ ;
 	      break ;
 
+	    case OFC_HANDLE_FSRESOLVER_OVERLAPPED:
+#if defined(OF_RESOLVER_FS)
+	      hEvent = OfcFSResolverGetOverlappedEvent (hEventHandle) ;
+	      if (ofc_event_test(hEvent))
+		{
+		  triggered_event = hEventHandle ;
+		}
+	      else
+		{
+		  eventElement = ofc_malloc(sizeof (EVENT_ELEMENT)) ;
+		  eventElement->hAssoc = hEventHandle ;
+		  eventElement->hEvent = hEvent ;
+		  ofc_enqueue(eventQueue, eventElement) ;
+		}
+#endif
+	      break ;
+
 	    case OFC_HANDLE_FSANDROID_OVERLAPPED:
 #if defined(OFC_FS_ANDROID)
 	      hEvent = OfcFSAndroidGetOverlappedEvent (hEventHandle) ;
@@ -409,6 +429,13 @@ OFC_VOID ofc_waitset_set_assoc_impl(OFC_HANDLE hEvent,
       ofc_handle_set_app(hAssoc, hApp, hSet) ;
       break ;
 
+    case OFC_HANDLE_FSRESOLVER_OVERLAPPED:
+#if defined(OF_RESOLVER_FS)
+      hAssoc = OfcFSResolverGetOverlappedEvent(hEvent);
+      ofc_handle_set_app(hAssoc, hApp, hSet);
+#endif
+      break;
+
     case OFC_HANDLE_FSANDROID_OVERLAPPED:
 #if defined(OFC_FS_ANDROID)
       hAssoc = OfcFSAndroidGetOverlappedEvent (hEvent) ;
@@ -466,6 +493,14 @@ OFC_VOID ofc_waitset_add_impl(OFC_HANDLE hSet, OFC_HANDLE hApp,
 	ofc_waitset_signal_impl(hSet, hEvent) ;
       break ;
 
+    case OFC_HANDLE_FSRESOLVER_OVERLAPPED:
+#if defined(OF_RESOLVER_FS)
+      hAssoc = OfcFSResolverGetOverlappedEvent(hEvent);
+      ofc_handle_set_app(hAssoc, hApp, hSet);
+      if (ofc_event_test(hAssoc))
+	ofc_waitset_signal_impl(hSet, hAssoc);
+#endif
+      break;
     case OFC_HANDLE_FSANDROID_OVERLAPPED:
       hAssoc = OfcFSAndroidGetOverlappedEvent (hEvent) ;
       ofc_handle_set_app(hAssoc, hApp, hSet) ;
