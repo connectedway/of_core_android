@@ -317,11 +317,25 @@ ofc_thread_init_impl(OFC_VOID)
 }
 
 OFC_CORE_LIB OFC_VOID
-ofc_thred_destroy_impl(OFC_VOID)
+ofc_thread_destroy_impl(OFC_VOID)
 {
 #if defined(__cyg_profile)
   pthread_key_delete (frame_var) ;
 #endif
+}
+
+OFC_CORE_LIB OFC_VOID
+ofc_thread_detach_impl(OFC_HANDLE hThread)
+{
+  ANDROID_THREAD *androidThread ;
+
+  androidThread = ofc_handle_lock (hThread) ;
+  if (androidThread != OFC_NULL)
+    {
+      androidThread->detachstate = OFC_THREAD_DETACH;
+      pthread_detach(androidThread->thread);
+      ofc_handle_unlock(hThread) ;
+    }
 }
 
 /** \} */
