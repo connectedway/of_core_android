@@ -44,7 +44,9 @@ OFC_BOOL ofc_lock_try_impl(OFC_LOCK_IMPL *lock)
   ret = OFC_FALSE ;
   if (pthread_mutex_trylock (&lock->mutex_lock) == 0)
     {
+#if defined(OFC_STACK_TRACE)
       lock->caller = ofc_process_relative_addr(__builtin_return_address(1));
+#endif
       ret = OFC_TRUE ;
     }
 
@@ -54,12 +56,16 @@ OFC_BOOL ofc_lock_try_impl(OFC_LOCK_IMPL *lock)
 OFC_VOID ofc_lock_impl(OFC_LOCK_IMPL *lock)
 {
     pthread_mutex_lock(&lock->mutex_lock);
+#if defined(OFC_STACK_TRACE)
     lock->caller = ofc_process_relative_addr(__builtin_return_address(1));
+#endif
 }
 
 OFC_VOID ofc_unlock_impl(OFC_LOCK_IMPL *lock)
 {
+#if defined(OFC_STACK_TRACE)
     lock->caller = ofc_process_relative_addr(__builtin_return_address(1));
+#endif
     pthread_mutex_unlock(&lock->mutex_lock);
 }
 
