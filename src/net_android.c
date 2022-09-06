@@ -69,31 +69,24 @@ OFC_INT ofc_net_interface_count_impl(OFC_VOID) {
 	      if (psockaddr->sa_family == AF_INET)
 		{
 		  ofc_strncpy (ifreq.ifr_name, pifreq->ifr_name, IFNAMSIZ) ;
-		  if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
-		    {
-		      if (ifreq.ifr_flags & IFF_UP && 
-			  !(ifreq.ifr_flags & IFF_LOOPBACK))
-			{
-			  /* see if ip matches */
-			  if (ioctl (sock, SIOCGIFADDR, &ifreq) >= 0)
-			    {
-			      int ip ;
-			      struct sockaddr_in *pAddrInet ;
-
-			      pAddrInet = (struct sockaddr_in *) &(ifreq.ifr_addr) ;
-			      ip = OFC_NET_NTOL (&pAddrInet->sin_addr.s_addr, 0) ;
-
-			      if (ofc_framework_get_wifi_ip() == ip)
-				++max_count ;
-			    }
-			  else
-			    {
-			      int err ;
-			      err = errno ;
-			      ofc_printf ("%d\n", err) ;
-			    }
-			}
-		    }
+                  if ((ofc_strcmp(ifreq.ifr_name, "wlan0") == 0) ||
+                      (ofc_strcmp(ifreq.ifr_name, "eth0") == 0))
+                    {
+                      if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
+                        {
+                          if (ifreq.ifr_flags & IFF_UP && 
+                              !(ifreq.ifr_flags & IFF_LOOPBACK))
+                            {
+                              ++max_count;
+                            }
+                        }
+                      else
+                        {
+                          int err ;
+                          err = errno ;
+                          ofc_printf ("%d\n", err) ;
+                        }
+                    }
 		}
 	      pifreq++ ;
 	    }
@@ -159,31 +152,23 @@ OFC_VOID ofc_net_interface_addr_impl(OFC_INT index,
 	      if (psockaddr->sa_family == AF_INET)
 		{
 		  ofc_strncpy (ifreq.ifr_name, pifreq->ifr_name, IFNAMSIZ) ;
-		  if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
-		    {
-		      if (ifreq.ifr_flags & IFF_UP && 
-			  !(ifreq.ifr_flags & IFF_LOOPBACK))
-			{
-			  if (ioctl (sock, SIOCGIFADDR, &ifreq) >= 0)
-			    {
-			      int ip ;
-			      struct sockaddr_in *pAddrInet ;
-
-			      pAddrInet = (struct sockaddr_in *) &(ifreq.ifr_addr) ;
-			      ip = OFC_NET_NTOL (&pAddrInet->sin_addr.s_addr, 0) ;
-
-			      if (ofc_framework_get_wifi_ip() == ip)
-				{
-				  if (index == max_count)
-				    {
-				      found = OFC_TRUE ;
-				    }
-				  ++max_count ;
-				}
-			    }
-			}
-		    }
-		}
+                  if ((ofc_strcmp(ifreq.ifr_name, "wlan0") == 0) ||
+                      (ofc_strcmp(ifreq.ifr_name, "eth0") == 0))
+                    {
+                      if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
+                        {
+                          if (ifreq.ifr_flags & IFF_UP && 
+                              !(ifreq.ifr_flags & IFF_LOOPBACK))
+                            {
+                              if (index == max_count)
+                                {
+                                  found = OFC_TRUE ;
+                                }
+                              ++max_count ;
+                            }
+                        }
+                    }
+                }
 	      if (!found)
 		pifreq++ ;
 	    }
