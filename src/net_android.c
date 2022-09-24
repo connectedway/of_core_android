@@ -69,8 +69,10 @@ OFC_INT ofc_net_interface_count_impl(OFC_VOID) {
 	      if (psockaddr->sa_family == AF_INET)
 		{
 		  ofc_strncpy (ifreq.ifr_name, pifreq->ifr_name, IFNAMSIZ) ;
-                  if ((ofc_strcmp(ifreq.ifr_name, "wlan0") == 0) ||
-                      (ofc_strcmp(ifreq.ifr_name, "eth0") == 0))
+                  ofc_printf("Got interface %s\n", ifreq.ifr_name);
+                  if ((ofc_strncmp(ifreq.ifr_name, "wlan", 4) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "eth", 4) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "p2p-wlan", 8) == 0))
                     {
                       if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
                         {
@@ -152,8 +154,10 @@ OFC_VOID ofc_net_interface_addr_impl(OFC_INT index,
 	      if (psockaddr->sa_family == AF_INET)
 		{
 		  ofc_strncpy (ifreq.ifr_name, pifreq->ifr_name, IFNAMSIZ) ;
-                  if ((ofc_strcmp(ifreq.ifr_name, "wlan0") == 0) ||
-                      (ofc_strcmp(ifreq.ifr_name, "eth0") == 0))
+                  ofc_printf("in addr interface %s\n", ifreq.ifr_name);
+                  if ((ofc_strncmp(ifreq.ifr_name, "wlan", 4) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "eth", 4) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "p2p-wlan", 8) == 0))
                     {
                       if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
                         {
