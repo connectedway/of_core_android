@@ -9,7 +9,7 @@ include_directories(
         ${of_core_android_SOURCE_DIR}/include
 )
 
-if(DEFINED OF_RESOLVER_FS)
+if(OF_RESOLVER_FS)
   include_directories(${of_resolver_fs_SOURCE_DIR}/include)
 endif()
 
