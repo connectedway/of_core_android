@@ -57,7 +57,7 @@ OFC_VOID ofc_process_unblock_signal(OFC_INT signal)
 OFC_VOID ofc_process_signal (OFC_PROCESS_ID process, OFC_INT signal,
 			     OFC_INT value)
 {
-  ofc_printf ("ofc_process_signal called but not supported\n") ;
+  ofc_log (OFC_LOG_WARN, "ofc_process_signal called but not supported\n") ;
 }
 
 OFC_BOOL ofc_process_term_trap_impl (OFC_PROCESS_TRAP_HANDLER trap) {

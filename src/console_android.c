@@ -100,6 +100,12 @@ OFC_VOID ofc_write_stdout_impl(OFC_CCHAR *obuf, OFC_SIZET len) {
 #endif
 }
 
+OFC_VOID ofc_write_log_impl(OFC_LOG_LEVEL level,
+			    OFC_CCHAR *obuf, OFC_SIZET len)
+{
+  ofc_write_stdout_impl(obuf, len);
+}
+
 OFC_VOID ofc_write_console_impl(OFC_CCHAR *obuf)
 {
 #if defined(LOG_TO_FILE)
@@ -125,7 +131,8 @@ OFC_VOID ofc_read_stdin_impl(OFC_CHAR *inbuf, OFC_SIZET len) {
 
 OFC_VOID ofc_read_password_impl(OFC_CHAR *inbuf, OFC_SIZET len)
 {
-  ofc_printf ("Attempt to Read Password on Android.  Need Method\n") ;
+  ofc_log (OFC_LOG_WARN,
+	   "Attempt to Read Password on Android.  Need Method\n") ;
 
   inbuf[0] = '\0' ;
 }
