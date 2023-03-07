@@ -3,6 +3,8 @@
  * Attribution-NoDerivatives 4.0 International license that can be
  * found in the LICENSE file.
  */
+#define ANDROID_MULTINETWORKING
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -13,6 +15,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <android/multinetwork.h>
+
 #include "ofc/core.h"
 #include "ofc/types.h"
 #include "ofc/config.h"
@@ -22,6 +26,7 @@
 #include "ofc/net_internal.h"
 #include "ofc/framework.h"
 
+static OFC_UINT64 g_network_handle;
 /**
  * \defgroup net_android Android Network Implementation
  */
@@ -29,6 +34,8 @@
 /** \{ */
 
 OFC_VOID ofc_net_init_impl(OFC_VOID) {
+  g_network_handle = 0L;
+
   signal (SIGPIPE, SIG_IGN) ;
 }
 
@@ -226,6 +233,90 @@ ofc_net_interface_wins_impl(OFC_INT index, OFC_INT *num_wins,
     *winslist = OFC_NULL ;
 }
 
+#if defined(ANDROID_MULTINETWORKING)
+OFC_VOID ofc_net_resolve_dns_name_impl(OFC_LPCSTR name,
+                                       OFC_UINT16 *num_addrs,
+                                       OFC_IPADDR *ip)
+{
+  net_handle_t network;
+  struct addrinfo *res;
+  struct addrinfo *p;
+  struct addrinfo hints;
+  int ret;
+
+  OFC_INT i;
+  OFC_INT j;
+  OFC_IPADDR temp;
+
+  if (g_network_handle == 0L)
+    {
+      ofc_log(OFC_LOG_FATAL, "Network Handle Not Set\n");
+    }
+  else
+    {
+      ofc_memset((OFC_VOID *) &hints, 0, sizeof(hints));
+
+#if defined(OFC_DISCOVER_IPV6)
+#if defined(OFC_DISCOVER_IPV4)
+      hints.ai_family = AF_UNSPEC;
+#else
+      hints.ai_family = AF_INET6 ;
+#endif
+
+#else
+#if defined(OFC_DISCOVER_IPV4)
+      hints.ai_family = AF_INET ;
+#else
+#error "Neither IPv4 nor IPv6 Configured"
+#endif
+#endif
+      hints.ai_socktype = 0;
+      hints.ai_flags = AI_ADDRCONFIG;
+
+      if (ofc_pton(name, &temp) != 0)
+        hints.ai_flags |= AI_NUMERICHOST;
+
+      res = NULL;
+      ret = android_getaddrinfofornetwork((net_handle_t) g_network_handle,
+                                          name, NULL, &hints, &res);
+
+      if (ret != 0)
+        *num_addrs = 0;
+      else
+        {
+          for (i = 0, p = res; p != NULL && i < *num_addrs; i++, p = p->ai_next)
+            {
+              if (p->ai_family == AF_INET)
+                {
+                  struct sockaddr_in *sa;
+                  sa = (struct sockaddr_in *) p->ai_addr;
+
+                  ip[i].ip_version = OFC_FAMILY_IP;
+                  ip[i].u.ipv4.addr = OFC_NET_NTOL (&sa->sin_addr.s_addr, 0);
+                }
+              else if (p->ai_family == AF_INET6)
+                {
+                  struct sockaddr_in6 *sa6;
+                  sa6 = (struct sockaddr_in6 *) p->ai_addr;
+
+                  ip[i].ip_version = OFC_FAMILY_IPV6;
+                  for (j = 0; j < 16; j++)
+                    {
+                      ip[i].u.ipv6._s6_addr[j] =
+                        sa6->sin6_addr.s6_addr[j];
+                    }
+                  ip[i].u.ipv6.scope = sa6->sin6_scope_id;
+                }
+              OFC_CHAR ip_str[IPSTR_LEN];
+              ofc_ntop(&ip[i], ip_str, IPSTR_LEN);
+              ofc_printf("Resolving %s to %s\n", name, ip_str);
+            }
+          freeaddrinfo(res);
+          *num_addrs = i;
+        }
+    }
+}
+#else
 OFC_VOID ofc_net_resolve_dns_name_impl(OFC_LPCSTR name,
                                        OFC_UINT16 *num_addrs,
                                        OFC_IPADDR *ip)
@@ -241,11 +332,19 @@ OFC_VOID ofc_net_resolve_dns_name_impl(OFC_LPCSTR name,
       for (i = 0 ; (hentry->h_addr_list[i] != OFC_NULL) && i <  *num_addrs ; 
 	   i++)
 	{
+          OFC_CHAR dst[80];
+
 	  ip[i].ip_version = OFC_FAMILY_IP ;
 	  ip[i].u.ipv4.addr = OFC_NET_NTOL (hentry->h_addr_list[i], 0) ;
 	}
     }
   *num_addrs = i ;
 }
+#endif
 
+OFC_CORE_LIB OFC_VOID
+ofc_net_set_handle_impl(OFC_UINT64 network_handle)
+{
+  g_network_handle = network_handle;
+}
 /** \} */
