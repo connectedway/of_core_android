@@ -15,7 +15,8 @@ static const char *env2str[OFC_ENV_NUM] =
         {
                 "OPEN_FILES_HOME",
                 "OPEN_FILES_INSTALL",
-                "EXTERNAL_STORAGE"
+                "EXTERNAL_STORAGE",
+		"OPEN_FILES_MODE"
         };
 
 OFC_BOOL
