@@ -14,6 +14,7 @@ if(OF_RESOLVER_FS)
 endif()
 
 set(SRCS
+        src/backtrace_android.c
         src/console_android.c
         src/env_android.c
         src/event_android.c
