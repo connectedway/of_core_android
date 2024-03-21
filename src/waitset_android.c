@@ -12,6 +12,7 @@
 #include "ofc/handle.h"
 #include "ofc/waitq.h"
 #include "ofc/timer.h"
+#include "ofc/process.h"
 #include "ofc/queue.h"
 #include "ofc/socket.h"
 #include "ofc/event.h"
@@ -27,6 +28,7 @@
 
 #include "ofc_android/fs_android.h"
 #if defined(OF_RESOLVER_FS)
+#include <dlfcn.h>
 #include "of_resolver_fs/fs_resolver.h"
 #endif
 
@@ -135,6 +137,44 @@ OFC_HANDLE PollEvent (OFC_INT fd, OFC_HANDLE eventQueue)
 
   return (triggered_event);
 }
+
+#if defined(OF_RESOLVER_FS)
+typedef OFC_HANDLE (*getEventHandleFunc)(OFC_HANDLE parentHandle);
+
+/*
+ * Resolver requires JNI.  It is a reverse JNI module
+ * that lets us call back into the Java App.
+ * The problem is, we build the android waitset into
+ * the core.  It is not linked with the JNI layer.
+ * So, even though we would hope we can do dynamic linking
+ * the build will fail if we call the resolver here.  So,
+ * let's see if we can do our own dynamic binding
+ */
+static OFC_HANDLE
+ofc_android_get_resolver_overlapped_event(OFC_HANDLE hEventHandle)
+{
+  OFC_HANDLE hEvent;
+  
+  static getEventHandleFunc overlapped_function = OFC_NULL;
+
+  if (overlapped_function == OFC_NULL)
+    {
+      /*
+       * Bind to the function
+       */
+      overlapped_function =
+        (getEventHandleFunc) dlsym(RTLD_DEFAULT,
+                                   "OfcFSResolverGetOverlappedEvent");
+      if (overlapped_function == OFC_NULL)
+        {
+          ofc_process_crash(dlerror());
+        }
+    }
+
+  hEvent = overlapped_function(hEventHandle);
+  return (hEvent);
+}
+#endif
 
 OFC_HANDLE ofc_waitset_wait_impl(OFC_HANDLE handle)
 {
@@ -279,7 +319,8 @@ OFC_HANDLE ofc_waitset_wait_impl(OFC_HANDLE handle)
 
 	    case OFC_HANDLE_FSRESOLVER_OVERLAPPED:
 #if defined(OF_RESOLVER_FS)
-	      hEvent = OfcFSResolverGetOverlappedEvent (hEventHandle) ;
+              hEvent =
+                ofc_android_get_resolver_overlapped_event(hEventHandle);
 	      if (ofc_event_test(hEvent))
 		{
 		  triggered_event = hEventHandle ;
@@ -431,7 +472,7 @@ OFC_VOID ofc_waitset_set_assoc_impl(OFC_HANDLE hEvent,
 
     case OFC_HANDLE_FSRESOLVER_OVERLAPPED:
 #if defined(OF_RESOLVER_FS)
-      hAssoc = OfcFSResolverGetOverlappedEvent(hEvent);
+      hAssoc = ofc_android_get_resolver_overlapped_event(hEvent);
       ofc_handle_set_app(hAssoc, hApp, hSet);
 #endif
       break;
@@ -495,7 +536,7 @@ OFC_VOID ofc_waitset_add_impl(OFC_HANDLE hSet, OFC_HANDLE hApp,
 
     case OFC_HANDLE_FSRESOLVER_OVERLAPPED:
 #if defined(OF_RESOLVER_FS)
-      hAssoc = OfcFSResolverGetOverlappedEvent(hEvent);
+      hAssoc = ofc_android_get_resolver_overlapped_event(hEvent);
       ofc_handle_set_app(hAssoc, hApp, hSet);
       if (ofc_event_test(hAssoc))
 	ofc_waitset_signal_impl(hSet, hAssoc);

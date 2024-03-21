@@ -26,6 +26,13 @@
 #include "ofc/net_internal.h"
 #include "ofc/framework.h"
 
+#if defined(OFC_KERBEROS)
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <netdb.h>
+#include <resolv.h>
+#endif
+
 static OFC_UINT64 g_network_handle;
 /**
  * \defgroup net_android Android Network Implementation
@@ -233,7 +240,56 @@ ofc_net_interface_wins_impl(OFC_INT index, OFC_INT *num_wins,
     *winslist = OFC_NULL ;
 }
 
-#if defined(ANDROID_MULTINETWORKING)
+#if defined(OFC_KERBEROS)
+OFC_VOID ofc_net_get_dcs(OFC_UINT *count, OFC_CHAR ***dc)
+{
+  OFC_CHAR *ret = OFC_NULL;
+  OFC_CCHAR *host = "_kerberos._tcp";
+
+  if (res_init() == 0)
+    {
+      unsigned char answer[PACKETSZ];
+      int len = res_search(host, C_IN, T_SRV, answer, sizeof(answer));
+      if (len >= 0)
+	{
+	  ns_msg handle;
+	  ns_rr rr;
+
+	  ns_initparse(answer, len, &handle);
+          *count = ns_msg_count(handle, ns_s_an);
+          *dc = ofc_malloc(*count * (sizeof(OFC_CHAR *) * *count));
+	  for (int i = 0; i < ns_msg_count(handle, ns_s_an) ; i++)
+	    {
+	      if (ns_parserr(&handle, ns_s_an, i, &rr) >= 0 &&
+		  ns_rr_type(rr) == T_SRV)
+		{
+		  char dname[MAXCDNAME];
+		  // decompress domain name
+		  if (dn_expand(ns_msg_base(handle),
+				ns_msg_end(handle),
+				ns_rr_rdata(rr) + 3 * NS_INT16SZ,
+				dname,
+				sizeof(dname)) >= 0)
+		    {
+                      (*dc)[i] = ofc_strdup(dname);
+		    }
+		}
+	    }
+	}
+      else
+	{
+	  ofc_log(OFC_LOG_WARN, "Could not resolve search for kerberos\n");
+	}
+    }
+  else
+    {
+      ofc_log(OFC_LOG_WARN, "Could Not Init Resolver Library for getting Domain DC\n");
+    }
+}
+#endif
+
+//#if defined(ANDROID_MULTINETWORKING)
+#if 0
 OFC_VOID ofc_net_resolve_dns_name_impl(OFC_LPCSTR name,
                                        OFC_UINT16 *num_addrs,
                                        OFC_IPADDR *ip)
