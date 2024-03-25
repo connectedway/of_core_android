@@ -32,6 +32,7 @@ OFC_VOID *ofc_lock_init_impl(OFC_VOID)
 
     lock = ofc_malloc(sizeof(OFC_LOCK_IMPL));
     pthread_mutexattr_init(&lock->mutex_attr);
+    pthread_mutexattr_settype(&lock->mutex_attr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init (&lock->mutex_lock, &lock->mutex_attr) ;
     lock->caller = OFC_NULL;
     return (lock);
