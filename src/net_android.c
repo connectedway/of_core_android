@@ -241,15 +241,14 @@ ofc_net_interface_wins_impl(OFC_INT index, OFC_INT *num_wins,
 }
 
 #if defined(OFC_KERBEROS)
-OFC_VOID ofc_net_get_dcs(OFC_UINT *count, OFC_CHAR ***dc)
+OFC_VOID ofc_net_resolve_svc(OFC_CCHAR *svc, OFC_UINT *count, OFC_CHAR ***dc)
 {
   OFC_CHAR *ret = OFC_NULL;
-  OFC_CCHAR *host = "_kerberos._tcp";
 
   if (res_init() == 0)
     {
       unsigned char answer[PACKETSZ];
-      int len = res_search(host, C_IN, T_SRV, answer, sizeof(answer));
+      int len = res_search(svc, C_IN, T_SRV, answer, sizeof(answer));
       if (len >= 0)
 	{
 	  ns_msg handle;
