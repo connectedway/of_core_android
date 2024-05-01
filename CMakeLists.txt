@@ -4,6 +4,7 @@ project(of_core_android VERSION 1.0.1 DESCRIPTION "OpenFiles Platform for Androi
 include(configs/default)
 configure_file(include/ofc_android/config.h.in ofc_android/config.h @ONLY)
 include_directories(
+	${openfiles_SOURCE_DIR}/include
         ${of_core_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}
         ${of_core_android_SOURCE_DIR}/include
