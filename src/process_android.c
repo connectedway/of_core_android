@@ -297,6 +297,7 @@ OFC_VOID *ofc_process_relative_addr_impl(OFC_VOID *addr)
   OFC_ULONG_PTR ptr;
 
   ptr = (OFC_ULONG_PTR) addr;
+#if 0
   if (core_load_addr == 0 || smb_load_addr == 0)
     ptr = 0;
   else if (core_load_addr > smb_load_addr)
@@ -335,5 +336,6 @@ OFC_VOID *ofc_process_relative_addr_impl(OFC_VOID *addr)
     }
   else
     ptr = 0;
+#endif
   return ((OFC_VOID *) ptr);
 }
