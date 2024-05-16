@@ -10,7 +10,7 @@
 #include "ofc/types.h"
 #include "ofc/impl/backtraceimpl.h"
 
-OFC_VOID ofc_backtrace_impl(OFC_VOID ***trace, OFC_SIZET len)
+OFC_VOID ofc_backtrace_impl(OFC_VOID **trace, OFC_SIZET len)
 {
 #if (defined(__GNUC__) || defined(__clang__)) && defined(OFC_STACK_TRACE)
 #if defined(__cyg_profile)
@@ -26,7 +26,7 @@ OFC_VOID ofc_backtrace_impl(OFC_VOID ***trace, OFC_SIZET len)
     trace[4] = __cyg_profile_return_address(4) ;
 #else
   if (len > 0)
-    (*trace)[0] = __builtin_return_address(0);
+    trace[0] = __builtin_return_address(0);
   if (len > 1)
     trace[1] = __builtin_return_address(1);
   if (len > 2)
