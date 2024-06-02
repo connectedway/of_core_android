@@ -84,7 +84,8 @@ OFC_INT ofc_net_interface_count_impl(OFC_VOID) {
 		{
 		  ofc_strncpy (ifreq.ifr_name, pifreq->ifr_name, IFNAMSIZ) ;
                   if ((ofc_strncmp(ifreq.ifr_name, "wlan", 4) == 0) ||
-                      (ofc_strncmp(ifreq.ifr_name, "eth", 4) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "eth", 3) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "tun", 3) == 0) ||
                       (ofc_strncmp(ifreq.ifr_name, "p2p-wlan", 8) == 0))
                     {
                       if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
@@ -167,7 +168,8 @@ OFC_VOID ofc_net_interface_addr_impl(OFC_INT index,
 		{
 		  ofc_strncpy (ifreq.ifr_name, pifreq->ifr_name, IFNAMSIZ) ;
                   if ((ofc_strncmp(ifreq.ifr_name, "wlan", 4) == 0) ||
-                      (ofc_strncmp(ifreq.ifr_name, "eth", 4) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "eth", 3) == 0) ||
+                      (ofc_strncmp(ifreq.ifr_name, "tun", 3) == 0) ||
                       (ofc_strncmp(ifreq.ifr_name, "p2p-wlan", 8) == 0))
                     {
                       if (ioctl (sock, SIOCGIFFLAGS, &ifreq) >= 0)
