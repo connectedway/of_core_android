@@ -8,6 +8,7 @@ include_directories(
         ${of_core_SOURCE_DIR}/include
         ${CMAKE_CURRENT_BINARY_DIR}
         ${of_core_android_SOURCE_DIR}/include
+        ${of_core_jni_SOURCE_DIR}/include
 )
 
 if(OF_RESOLVER_FS)

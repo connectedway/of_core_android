@@ -5,6 +5,7 @@
  */
 #include <pthread.h>
 #include <signal.h>
+
 #define __USE_XOPEN
 #include <unistd.h>
 #include <sys/wait.h>
@@ -20,6 +21,10 @@
 #include "ofc/waitset.h"
 #include "ofc/event.h"
 #include "ofc/heap.h"
+
+#if defined(OFC_INCLUDE_JNI)
+#include "ofc_jni/com_connectedway_io_Utils.h"
+#endif
 
 /** \{ */
 
@@ -130,8 +135,16 @@ static void *ofc_thread_launch(void *arg)
       pthread_setspecific (frame_var, androidThread->__frame_stack) ;
     }
 #endif
+#if defined(OFC_INCLUDE_JNI)
+  ofc_attach_java_thread();
+#endif
+
   androidThread->ret = (androidThread->scheduler)(androidThread->handle,
 						androidThread->context) ;
+
+#if defined(OFC_INCLUDE_JNI)
+  ofc_detach_java_thread();
+#endif
 
   if (androidThread->hNotify != OFC_HANDLE_NULL)
     ofc_event_set(androidThread->hNotify) ;
