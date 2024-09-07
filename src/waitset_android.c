@@ -27,6 +27,9 @@
 #include "ofc/file.h"
 
 #include "ofc_android/fs_android.h"
+#if defined(OFC_FS_PIPE)
+#include "of_core_fs_pipe/fs_pipe.h"
+#endif
 #if defined(OF_RESOLVER_FS)
 #include <dlfcn.h>
 #include "of_resolver_fs/fs_resolver.h"
@@ -338,6 +341,23 @@ OFC_HANDLE ofc_waitset_wait_impl(OFC_HANDLE handle)
 	    case OFC_HANDLE_FSANDROID_OVERLAPPED:
 #if defined(OFC_FS_ANDROID)
 	      hEvent = OfcFSAndroidGetOverlappedEvent (hEventHandle) ;
+	      if (ofc_event_test(hEvent))
+		{
+		  triggered_event = hEventHandle ;
+		}
+	      else
+		{
+		  eventElement = ofc_malloc(sizeof (EVENT_ELEMENT)) ;
+		  eventElement->hAssoc = hEventHandle ;
+		  eventElement->hEvent = hEvent ;
+		  ofc_enqueue(eventQueue, eventElement) ;
+		}
+#endif
+	      break ;
+
+	    case OFC_HANDLE_FSPIPE_OVERLAPPED:
+#if defined(OFC_FS_PIPE)
+	      hEvent = OfcFSPipeGetOverlappedEvent (hEventHandle) ;
 	      if (ofc_event_test(hEvent))
 		{
 		  triggered_event = hEventHandle ;

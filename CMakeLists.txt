@@ -15,6 +15,10 @@ if(OF_RESOLVER_FS)
   include_directories(${of_resolver_fs_SOURCE_DIR}/include)
 endif()
 
+if(OFC_FS_PIPE)
+  include_directories(${of_core_fs_pipe_SOURCE_DIR}/include)
+endif()
+
 set(SRCS
         src/backtrace_android.c
         src/console_android.c
