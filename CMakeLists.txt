@@ -29,6 +29,8 @@ set(SRCS
         src/waitset_android.c
         )
 
+target_link_libraries(of_core_android PRIVATE log)
+
 add_library(of_core_android OBJECT ${SRCS})
 set_property(TARGET of_core_android PROPERTY POSITION_INDEPENDENT_CODE ON)
 
